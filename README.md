@@ -1,6 +1,6 @@
-# Data agnostic Random Forest Regression (binary prediction) with docker compose and Plumber API  
+# Data agnostic Support Vector Classifier with docker compose and Plumber API  
 
-* The idea of this project is to have a data agnostic random forest logistic regression that trains, predicts and serves as a docker compose service.
+* The idea of this project is to have a data agnostic Support vector classifier that trains, predicts and serves as a docker compose service.
  So basically, the use just needs to attach the folder with the data with a binary response variable then run train script to train the model and save it as an artifact back to the attached volume, test the model to save the predictions as an output in the attached volume and run the serve script to run a plumber API which returns a json output of predictions. 
  
 * The volume to be attached contains the csv files and the data schema.    
@@ -22,7 +22,7 @@ should have your files with the following pattern
 ```
 version: "3"
 services:
-  rforest_regressor:
+  svc_classifier:
     build: .
     volumes:
       - /path/to/data/dir/ml_vol:/modellingLogistic/ml_vol
@@ -45,7 +45,7 @@ docker compose up -d
 3. Running your script inside the container.    
 
 ```
-docker compose exec -it rforest_regressor ./train
+docker compose exec -it svc_classifier ./train
 
 ```
 Note: logimodel is the name of the service in docker compose yml.    
@@ -55,7 +55,7 @@ To test the model you'll just replace ./train with ./test
 4. Starting a web server 
 
 ```
-docker compose exec -it rforest_regressor ./serve 
+docker compose exec -it svc_classifier ./serve 
 ```
 
 Once the plumber API starts you can now open another terminal and paste the following: 
