@@ -1,0 +1,11 @@
+version: "3"
+services:
+  svc_classifier:
+    build: .
+    volumes:
+      - ./ml_vol:/opt/ml_vol
+    ports:
+      - 8080:8080
+    working_dir: /opt/ModellingLogistic
+    command: tail -f /dev/null # keep the container running
+    

@@ -1,0 +1,42 @@
+#!/usr/bin/env Rscript
+
+library(rjson)
+library(data.table)
+library(tidyr)
+library(randomForest)
+
+fname_test <- dir(path = "./../ml_vol/inputs/data/testing/binaryClassificationBaseMainInput/", pattern = "\\_test.csv$")
+fname_testschema <- dir(path = "./../ml_vol/inputs/data_config/", pattern = "\\_schema.json$")
+testdata <- fread(paste0("./../ml_vol/inputs/data/testing/binaryClassificationBaseMainInput/",fname_test))
+
+tdataschema <- fromJSON(file = paste0("./../ml_vol/inputs/data_config/",fname_testschema))
+
+# select the ID column into a variable and drop it from the test data. 
+# the variable created will be bound to the predicted probabilities 
+
+idfieldname <- tdataschema$inputDatasets$binaryClassificationBaseMainInput$idField
+
+
+source("preprocessor.R")
+
+resvar <- preprocessing(fname_train=fname_test,fname_schema=fname_schema,genericdata=testdata,dataschema=tdataschema)[[2]]
+test_data <- preprocessing(fname_train=fname_test,fname_schema=fname_schema,genericdata=testdata,dataschema=tdataschema)[[3]]
+test_data <- na.omit(test_data)
+predictors <- subset(test_data,select = -c(eval(as.name(paste0(resvar))),eval(as.name(paste0(idfieldname)))))
+# load the trained model
+rf_logistic <- readRDS("./../ml_vol/model/artifacts/rfmodel.rds")
+saveRDS(idfieldname, "./../ml_vol/model/artifacts/id.rds")
+testing <- function()
+{
+  df <- test_data
+  predictions <- predict(rf_logistic, predictors , type="response")
+  thepredictions <- cbind(test_data, predictions)
+  testdata_preds <- thepredictions[,c(eval(resvar),eval(idfieldname),"predictions")]
+  testdata_preds <- setDT(testdata_preds)[,predictions := fifelse(predictions < 0,0, predictions)]
+  testpredictions <- tidyr::pivot_wider(testdata_preds,names_from=eval(resvar),values_from="predictions")
+  testpredictions_n <- setDT(testpredictions)[is.na(`1`),`1` := 1-`0`][is.na(`0`),`0` := 1-`1`]
+  write.csv(testpredictions_n,"./../ml_vol/outputs/testing_outputs/testpredictions.csv")
+
+}
+
+testing()

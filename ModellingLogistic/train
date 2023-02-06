@@ -1,0 +1,40 @@
+#!/usr/bin/env Rscript
+
+library(data.table) # Opted for this, 1. Because its really fast 2. dplyr conflicted with plumber
+library(rjson) # for handling json data
+library(e1071)
+# use pattern to read data : this is to make the model generic 
+fname_train <- dir(path = "./../ml_vol/inputs/data/training/binaryClassificationBaseMainInput/", pattern = "\\_train.csv$")
+fname_schema <- dir(path = "./../ml_vol/inputs/data_config/", pattern = "\\_schema.json$")
+
+# read in the schema so that we extract the response variable
+dataschema <- fromJSON(file = paste0("./../ml_vol/inputs/data_config/",fname_schema))
+
+# import the training data 
+genericdata <- fread(paste0("./../ml_vol/inputs/data/training/binaryClassificationBaseMainInput/",fname_train))
+
+# call the preprocessing pipeline 
+source("preprocessor.R")
+
+svcdata <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[1]]
+varr <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[2]]
+#rfdata <- na.omit(rfdata)
+predictors <- subset(svcdata,select = -c(eval(as.name(paste0(varr)))))
+predictors <- data.matrix(predictors)
+yvar <- svcdata[,c(eval(varr))]
+saveRDS(varr, "./../ml_vol/model/artifacts/response_variable.rds")
+
+#function to train the model  and save it back into the mounted volume
+lets_train <- function(rvar,predictors){
+
+  set.seed(120)
+  svm_linear <- svm(y=yvar, x=predictors,
+                    type = NULL, kernel = "linear", scale=TRUE)
+  # save the model into the artifacts folder in the attached volume.
+  saveRDS(rf, "./../ml_vol/model/artifacts/svcmodel.rds")
+
+}
+
+# calling the model
+glmModel <- lets_train( rvar = rvar, predictors=predictors)
+

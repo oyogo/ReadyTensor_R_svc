@@ -1,0 +1,47 @@
+---
+title: "Support vector classifier"
+format: html
+editor: visual
+---
+
+# load libraries
+
+```{r}
+library(e1071)
+library(data.table)
+library(dplyr)
+library(superml)
+```
+
+# Import data
+
+```{r}
+telco <- fread("ml_vol/inputs/data/training/binaryClassificationBaseMainInput/telco_churn_train.csv")
+```
+
+label encode the response variable
+```{r}
+# label encode the response variable
+lbl <- LabelEncoder$new()
+
+telco[,c("Churn")] <- lbl$fit_transform(telco[,c("Churn")])
+```
+
+
+Split data into y (response variable) and x (explanatory variables)
+```{r}
+telco <- telco[,-c("customerID")]
+yvar <- telco[,c("Churn")]
+xvars <- telco[,-c("Churn")]
+```
+
+
+```{r}
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+
+svm_linear <- train(y=yvar, x=xvars, method = "svmLinear",
+                    trConrol=trctrl,
+                    preProcess = c("center","scale"),
+                    tuneLength = 10)
+```
+
