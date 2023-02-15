@@ -2,7 +2,7 @@
 library(data.table)
 library(rjson)
 library(readr)
-library(randomForest)
+library(e1071)
 #json list(auto_unbox=TRUE)
 
 #* @post /infer
@@ -13,11 +13,11 @@ function(req) {
     parsed_df <- rjson::fromJSON(df)
     dfr <-  as.data.frame(do.call(cbind, parsed_df))
     
-    rf_logistic <- readr::read_rds("./../ml_vol/model/artifacts/rfmodel.rds")
+    svc_model <- readr::read_rds("./../ml_vol/model/artifacts/svcmodel.rds")
     resvar <- readr::read_rds("./../ml_vol/model/artifacts/response_variable.rds")
     id <- readr::read_rds("./../ml_vol/model/artifacts/id.rds")
     newdf <- subset(dfr, select = -c(eval(as.name(paste0(resvar))),eval(as.name(paste0(id)))))
-    predicted <- predict(rf_logistic,newdata=newdf, type="response")
+    predicted <- predict(svc_model ,newdata=newdf, type="response")
      predicted <- data.table(predicted)
      names(predicted) <- "probabilities"
      predicted <- cbind(dfr,predicted)

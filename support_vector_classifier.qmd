@@ -11,6 +11,7 @@ library(e1071)
 library(data.table)
 library(dplyr)
 library(superml)
+library(caret)
 ```
 
 # Import data
@@ -20,6 +21,7 @@ telco <- fread("ml_vol/inputs/data/training/binaryClassificationBaseMainInput/te
 ```
 
 label encode the response variable
+
 ```{r}
 # label encode the response variable
 lbl <- LabelEncoder$new()
@@ -27,21 +29,27 @@ lbl <- LabelEncoder$new()
 telco[,c("Churn")] <- lbl$fit_transform(telco[,c("Churn")])
 ```
 
-
 Split data into y (response variable) and x (explanatory variables)
+
 ```{r}
 telco <- telco[,-c("customerID")]
-yvar <- telco[,c("Churn")]
+telco <- telco[,Churn := fifelse(Churn == 'Yes',1,0)]
+yvar <- factor(telco[,c("Churn")])
 xvars <- telco[,-c("Churn")]
 ```
-
 
 ```{r}
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
 
-svm_linear <- train(y=yvar, x=xvars, method = "svmLinear",
-                    trConrol=trctrl,
-                    preProcess = c("center","scale"),
-                    tuneLength = 10)
+svm_linear <- svm(formula = Churn ~ .,
+                 data = telco,
+                 type = 'C-classification',
+                 kernel = 'linear')
+```
+
+
+
+```{r}
+y_pred = predict(svm_linear, newdata = test_set[-3])
 ```
 
