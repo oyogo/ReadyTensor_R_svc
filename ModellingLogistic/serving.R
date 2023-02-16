@@ -3,7 +3,11 @@ library(data.table)
 library(rjson)
 library(readr)
 library(e1071)
+library(superml)
+library(glue)
 #json list(auto_unbox=TRUE)
+
+source("preprocessor.R") # calling this so that we can access the hashing function for use in creating predictor sparse matrix
 
 #* @post /infer
 #* @serializer json list(auto_unbox=TRUE)
@@ -15,10 +19,14 @@ function(req) {
     
     svc_model <- readr::read_rds("./../ml_vol/model/artifacts/svcmodel.rds")
     resvar <- readr::read_rds("./../ml_vol/model/artifacts/response_variable.rds")
+    thefeatures <- readr::read_rds("./../ml_vol/model/artifacts/features.rds")
     id <- readr::read_rds("./../ml_vol/model/artifacts/id.rds")
+    
     newdf <- subset(dfr, select = -c(eval(as.name(paste0(resvar))),eval(as.name(paste0(id)))))
-    predicted <- predict(svc_model ,newdata=newdf, type="response")
-     predicted <- data.table(predicted)
+    
+    modelmat_pred <- hashing(df=newdf, features=thefeatures)
+    predicted <- predict(svc_model,newdata=modelmat_pred,probability=TRUE)
+    predicted <- data.table(predicted)
      names(predicted) <- "probabilities"
      predicted <- cbind(dfr,predicted)
 

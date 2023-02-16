@@ -17,32 +17,25 @@ genericdata <- fread(paste0("./../ml_vol/inputs/data/training/binaryClassificati
 # call the preprocessing pipeline 
 source("preprocessor.R")
 
-svcdata <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[1]]
+modelmat <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[1]]
 varr <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[2]]
-#rfdata <- na.omit(rfdata)
-predictors <- subset(svcdata,select = -c(eval(as.name(paste0(varr)))))
-#predictors <- data.matrix(predictors)
-yvar <- svcdata[,c(eval(varr))]
-yvar <- as.factor(yvar)
-#print(str(yvar))
+output_vector <- preprocessing(fname_train=fname_train,fname_schema=fname_schema,genericdata=genericdata,dataschema=dataschema)[[4]]
+
 
 saveRDS(varr, "./../ml_vol/model/artifacts/response_variable.rds")
-#print(head(predictors))
+
 #function to train the model  and save it back into the mounted volume
 lets_train <- function(rvar,predictors){
 
-  set.seed(120)
-  #trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 2)
-
-  # svm_linear <- svm(y=yvar, x=predictors,
-  #                   type = NULL, kernel = "linear", scale=TRUE)
-  svm_linear <- svm(formula = glue({varr}) ~ .,
-                    data = svcdata,probability=TRUE)
-  # save the model into the artifacts folder in the attached volume.
+  set.seed(123)
+ svm_linear <- svm(x = predictors, y = rvar, 
+                   #type = "C-classification", kernel = "radial", 
+                   probability=TRUE)
+ 
   saveRDS(svm_linear, "./../ml_vol/model/artifacts/svcmodel.rds")
 
 }
 
 # calling the model
-glmModel <- lets_train( rvar = rvar, predictors=predictors)
+glmModel <- lets_train( rvar = output_vector, predictors=modelmat)
 

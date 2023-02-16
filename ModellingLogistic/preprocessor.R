@@ -9,6 +9,16 @@ library(FeatureHashing)
 library(superml)
 library(glue)
 
+
+hashing <- function(df,features){
+  
+  mat <- hashed.model.matrix(features,
+                             df, hash.size = 2 ^ 10,
+                             create.mapping = TRUE)
+  return(mat)
+  
+}
+
 preprocessing <- function(fname_train,fname_schema,genericdata,dataschema){ 
 
   # get the response variable and store it as a string to a variable
@@ -73,7 +83,14 @@ genericdata[,c(glue({var}))] <- lbl$fit_transform(genericdata[,c(glue({var}))])
 data_withid <- genericdata # will need this for the prediction output(we need the id column for aligning the predictions with the respective id)
 data_noid <- subset(genericdata,select = -c(eval(as.name(paste0(idfieldname)))))
 
-return(list(data_noid,varr,data_withid))
+features <- c(catcols,v)
+output_vector <- data_noid[,glue({var})]
+# encode the categorical variables and create a matrix for the xgboost training
+modelmat <- hashing(df = data_noid, features = features)
+
+saveRDS(features,"./../ml_vol/model/artifacts/features.rds")
+
+return(list(modelmat,varr,data_withid,output_vector))
   
 }
 

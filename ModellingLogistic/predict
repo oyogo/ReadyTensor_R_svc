@@ -17,14 +17,12 @@ tdataschema <- fromJSON(file = paste0("./../ml_vol/inputs/data_config/",fname_te
 idfieldname <- tdataschema$inputDatasets$binaryClassificationBaseMainInput$idField
 
 
-source("preprocessor.R")
+source("preprocessor.R") 
 
 resvar <- preprocessing(fname_train=fname_test,fname_schema=fname_schema,genericdata=testdata,dataschema=tdataschema)[[2]]
+modelmat_test <- preprocessing(fname_train=fname_test,fname_schema=fname_schema,genericdata=testdata,dataschema=tdataschema)[[1]]
 test_data <- preprocessing(fname_train=fname_test,fname_schema=fname_schema,genericdata=testdata,dataschema=tdataschema)[[3]]
-test_data <- na.omit(test_data)
-#predictors <- subset(test_data,select = -c(eval(as.name(paste0(resvar))),eval(as.name(paste0(idfieldname)))))
-predictorss <- subset(test_data,select = -c(eval(as.name(paste0(idfieldname)))))
-predictorss <- na.omit(predictorss)
+
 
 #load the trained model
 svm_model <- readRDS("./../ml_vol/model/artifacts/svcmodel.rds")
@@ -32,11 +30,13 @@ saveRDS(idfieldname, "./../ml_vol/model/artifacts/id.rds")
 testing <- function()
 {
   df <- test_data
-  predictions <- stats::predict(svm_model, predictorss , probability=TRUE)
+  predictions <- predict(svm_model, modelmat_test,probability=TRUE)
   thepredictions <- cbind(df, predictions)
   testdata_preds <- thepredictions[,c(eval(resvar),eval(idfieldname),"predictions")]
-  testdata_preds <- setDT(testdata_preds)[,predictions := fifelse(predictions < 0,0, predictions)]
+
+  #testdata_preds <- setDT(testdata_preds)[,predictions := fifelse(predictions < 0,0, predictions)]
   testpredictions <- tidyr::pivot_wider(testdata_preds,names_from=eval(resvar),values_from="predictions")
+
   testpredictions_n <- setDT(testpredictions)[is.na(`1`),`1` := 1-`0`][is.na(`0`),`0` := 1-`1`]
   write.csv(testpredictions_n,"./../ml_vol/outputs/testing_outputs/testpredictions.csv")
 
