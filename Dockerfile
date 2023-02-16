@@ -17,6 +17,9 @@ RUN R -e "install.packages('jsonlite', dependencies=T)"
 RUN R -e "install.packages('tidyr', dependencies=T)"
 RUN R -e "install.packages('e1071', dependencies=T)"
 RUN R -e "install.packages('FeatureHashing', dependencies=T)"
+RUN R -e "install.packages('superml', dependencies=T)"
+RUN R -e "install.packages('caret', dependencies=T)"
+RUN R -e "install.packages('glue', dependencies=T)"
 
 
 COPY ./ModellingLogistic /opt/ModellingLogistic
