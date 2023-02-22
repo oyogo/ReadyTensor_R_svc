@@ -15,15 +15,17 @@ function(req) {
   
     df <- req$postBody
     parsed_df <- rjson::fromJSON(df)
-    dfr <-  as.data.frame(do.call(cbind, parsed_df))
-    
+    #dfr <- (parsed_df$instances
+    #dfr <-  as.data.frame(do.call(rbind, parsed_df$instances))
+    dfr <- data.table::rbindlist(parsed_df$instances)
     svc_model <- readr::read_rds("./../ml_vol/model/artifacts/svcmodel.rds")
     resvar <- readr::read_rds("./../ml_vol/model/artifacts/response_variable.rds")
     thefeatures <- readr::read_rds("./../ml_vol/model/artifacts/features.rds")
     id <- readr::read_rds("./../ml_vol/model/artifacts/id.rds")
     
+    #print(str(dfr))
     newdf <- subset(dfr, select = -c(eval(as.name(paste0(resvar))),eval(as.name(paste0(id)))))
-    
+
     modelmat_pred <- hashing(df=newdf, features=thefeatures)
     predicted <- predict(svc_model,newdata=modelmat_pred,probability=TRUE)
     predicted <- data.table(predicted)

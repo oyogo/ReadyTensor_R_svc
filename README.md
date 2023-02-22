@@ -63,7 +63,7 @@ Once the plumber API starts you can now open another terminal and paste the foll
 ```
 curl localhost:8000/infer --header "Content-Type: application/json" \
   --request POST \
-  --data @/path/to/your/data/testjsn.json
+  --data @/path/to/your/data/telco3.json
 ```
 
 _*Note: ensure you change the path to data accordingly!*_
